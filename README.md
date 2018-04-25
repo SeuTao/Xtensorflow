@@ -1,6 +1,6 @@
 # Xtensorflow
 XTensorflow
 
-A high level tensorflow lib. 
-Easy to define tf network;
-Convert to caffemodel and other engine; 
+A high level tensorflow lib which can convert defined tf model to caffe and other engine;
+
+ 
