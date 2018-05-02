@@ -1059,58 +1059,6 @@ class Xtensorflow():
 
         return new_dict, weight_list, bias_list
 
-    def create_xnetfile(self,sess):
-        xnetname = self.model_name
-        systime = time.strftime('%Y-%m-%d,%H:%M', time.localtime(time.time()))
-        params_txt = 'xnet_' + xnetname + '.h'
-        pf = open(params_txt, 'w')
-
-        xnetversion = 'test'
-        pf.write('/**xnetlib information*******\n')
-        pf.write('*model generate time:%s\n' % systime)
-        pf.write('*lib name           :%s\n' % xnetname)
-        pf.write('*version num        :%s\n' % xnetversion)
-        pf.write('****************/\n')
-
-        ##pf.write('#include "xbase.h"\n')
-        ##pf.write('#include "xnet_model.h"\n')
-
-        pf.write('namespace %s {\n' % xnetname)
-        pf.write('const ModelLayer model_layers[] = {\n')
-
-        layer_list, weight_list, bias_list = self.create_xnetlist(sess)
-
-        for layer in layer_list:
-            param_str = ', '.join(layer)
-            pf.write('{%s},\n' % param_str)
-        pf.write('};\n')
-        pf.write('const int nModelLayer = %d;\n' % len(layer_list))
-
-        ## width,height,channels
-        pf.write('const int img_width = %d;\n' % self.input_w)
-        pf.write('const int img_height = %d;\n' % self.input_h)
-        pf.write('const int input_dims = %d;\n' % self.input_dim)
-        pf.write('const int cnn_type = %s;\n' % 'CLASSIFY')
-
-        ## weights
-        pf.write('const float weight[] = {\n')
-        write_weights(pf, weight_list, 100)
-        pf.write('\n};\n')
-
-        ## bias
-        pf.write('const float bias[] = {\n')
-        write_weights(pf, bias_list, 30)
-        pf.write('\n};\n')
-
-        ## data mean
-        data_mean = '128,128,128'
-        data_std = '1,1,1'
-
-        pf.write('const float data_mean[] = {%s};\n' % data_mean)
-        pf.write('const float data_std[] = {%s};\n' % data_std)
-        pf.write('}\n')
-        pf.close
-
     def create_prototxt_and_caffemodel(self, sess, prototxt, model):
         # layer_list, weight_list, bias_list = self.create_xnetlist_v2(sess)
         layer_dict, weight_list, bias_list = self.create_xnetlist_v3(sess)
