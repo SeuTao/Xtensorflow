@@ -196,6 +196,7 @@ class Xtensorflow():
             self.layer_dict[str(index)] = layer
             return index
 
+
     def depthwise_conv_layer(self , input_index, output_shape, kernel_size, stride , activation, rate = 1, index = None):
         if index == None:
             index = input_index + 1
@@ -454,16 +455,15 @@ class Xtensorflow():
                                                   trainable=False,
                                                   collections=moving_collections)
 
-                # def bn_train():
-                    # Calculate the moments based on the individual batch.
+
+                # Calculate the moments based on the individual batch.
                 mean, variance = tf.nn.moments(inputs, axis)
                 update_moving_mean = moving_averages.assign_moving_average(
                         moving_mean, mean, decay, zero_debias = False)
                 tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_mean)
                 update_moving_variance = moving_averages.assign_moving_average(
                         moving_variance, variance, decay, zero_debias = False)
-                # tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
-                #     return mean, variance
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_moving_variance)
 
                 def mean_var_with_update():
                     with tf.control_dependencies([update_moving_mean, update_moving_variance]):
