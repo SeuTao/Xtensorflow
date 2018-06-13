@@ -140,20 +140,29 @@ class Xtensorflow():
 
             input = self.get_layer_output(input_index)
 
+            # input.shape.tolist()
+            # input_shape = input.get_shape().as_list()
+
             input_dim = input.shape[-1]
             output_dim = output_shape[-1]
 
             input_h = int(input.shape[1])
             input_w = int(input.shape[2])
-            output_h = int(output_shape[1])
-            output_w = int(output_shape[2])
+
+            if input_h%stride !=0 or input_w%stride !=0:
+                print('Conv Input Stride Error')
+                return
+
+
+            output_h = input_h / stride
+            output_w = input_w / stride
 
             kernel_size_tmp = kernel_size + (kernel_size - 1) * (rate - 1)
             pad_h = int(math.ceil(((output_h-1)*stride + kernel_size_tmp - input_h)/2.0))
             pad_w = int(math.ceil(((output_w-1)*stride + kernel_size_tmp - input_w)/2.0))
 
             #Note: tensorflow "SAME" tries to pad evenly left and right, but if the amount of columns to be added is odd, it will add the extra column to the right
-            #      Xnet,Caffe pad left first,then img2col
+            #      Xnet, Caffe pad left first,then img2col
             if pad_w > 0:
                 input = tf.pad(input, [[0, 0], [pad_h, pad_h], [pad_w, pad_w], [0, 0]], "CONSTANT")
 
@@ -189,7 +198,7 @@ class Xtensorflow():
 
             print(conv)
             layer = self.layer_info(index, input_index, 1, 'LAYER_CONVOLUTIONAL',
-                                    input.shape[3], output_shape[3], kernel_size, stride, pad_w, rate, True, activation, conv, self.reduce_index)
+                                    input.shape[3], output_shape[-1], kernel_size, stride, pad_w, rate, True, activation, conv, self.reduce_index)
 
 
 
@@ -214,8 +223,15 @@ class Xtensorflow():
 
             input_h = int(input.shape[1])
             input_w = int(input.shape[2])
-            output_h = int(output_shape[1])
-            output_w = int(output_shape[2])
+            # output_h = int(output_shape[1])
+            # output_w = int(output_shape[2])
+
+            if input_h%stride !=0 or input_w%stride !=0:
+                print('Conv Input Stride Error')
+                return
+
+            output_h = input_h / stride
+            output_w = input_w / stride
 
             kernel_size_tmp = kernel_size
             pad_h = int(math.ceil(((output_h-1)*stride + kernel_size_tmp - input_h)/2.0))
@@ -243,7 +259,7 @@ class Xtensorflow():
             print(conv)
 
             layer = self.layer_info(index, input_index, 1, 'LAYER_CONVOLUTIONAL',
-                                    input.shape[3], output_shape[3], kernel_size, stride, pad_w, rate, True, activation, conv, self.reduce_index)
+                                    input.shape[3], output_shape[-1], kernel_size, stride, pad_w, rate, True, activation, conv, self.reduce_index)
 
 
             self.layer_dict[str(index)] = layer
@@ -264,6 +280,8 @@ class Xtensorflow():
             input_w = int(input.shape[2])
             output_h = int(output_shape[1] / rate)
             output_w = int(output_shape[2] / rate)
+
+
 
             kernel_size_tmp = kernel_size + (kernel_size - 1) * (1 - 1)
             pad_h = int(math.ceil(((output_h-1)*stride + kernel_size_tmp - input_h)/2.0))
@@ -411,6 +429,7 @@ class Xtensorflow():
                 output_w = int(output_shape[2])
                 output_h = int(output_shape[1])
 
+
                 output = tf.image.resize_images(input, [output_h, output_w], tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
                 if activation != None:
@@ -418,7 +437,7 @@ class Xtensorflow():
 
                 # self.reduce_index += 1
                 layer = self.layer_info(index, input_index, 1, 'LAYER_NN_RESIZE',
-                                        input.shape[3], output_shape[3], 0, 2, 0, 0, False, activation,
+                                        input.shape[3], output_shape[-1], 0, 2, 0, 0, False, activation,
                                         output, self.reduce_index)
 
                 self.layer_dict[str(index)] = layer
@@ -613,7 +632,7 @@ class Xtensorflow():
             print(output)
 
             layer = self.layer_info(index, input_index, 1, 'LAYER_MAX_POOLING',
-                                    input.shape[3], output_shape[3], kernel_size, stride, 0, 0, False,activation, output, self.reduce_index)
+                                    input.shape[3], output_shape[-1], kernel_size, stride, 0, 0, False,activation, output, self.reduce_index)
             self.layer_dict[str(index)] = layer
 
             return index
@@ -635,7 +654,7 @@ class Xtensorflow():
             print(output)
 
             layer = self.layer_info(index, input_index, 1, 'LAYER_AVE_POOLING',
-                                    input.shape[3], output_shape[3], kernel_size, stride, 0, 0, False, activation,
+                                    input.shape[3], output_shape[-1], kernel_size, stride, 0, 0, False, activation,
                                     output, self.reduce_index)
             self.layer_dict[str(index)] = layer
 
