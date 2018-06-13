@@ -205,6 +205,33 @@ class Xtensorflow():
             self.layer_dict[str(index)] = layer
             return index
 
+    def scale_layer(self , input_index, activation, index = None):
+        if index == None:
+            index = input_index + 1
+
+        with tf.variable_scope("Layer_Scale_"+str(index)) as scope:
+            input = self.get_layer_output(input_index)
+            inputs_shape = input.get_shape()
+
+            gamma = tf.get_variable('gamma', inputs_shape[-1], initializer=tf.ones_initializer(),
+                                        collections=xnet_collections)
+
+            beta = tf.get_variable('beta', inputs_shape[-1], initializer=tf.zeros_initializer(),
+                                       collections=xnet_collections)
+
+            out = tf.nn.bias_add(input * gamma, beta)
+            if activation != None:
+                out = activation(out)
+
+            print(out)
+            layer = self.layer_info(index, input_index, 1, 'LAYER_SCALE',
+                                    input.shape[3], inputs_shape[-1], 0, 0, 0, 0, True, activation, out, self.reduce_index)
+
+
+
+            self.layer_dict[str(index)] = layer
+            return index
+
 
     def depthwise_conv_layer(self , input_index, output_shape, kernel_size, stride , activation, rate = 1, index = None):
         if index == None:
@@ -993,6 +1020,9 @@ class Xtensorflow():
             if cur_layer['layer_type'] == 'LAYER_CONVOLUTIONAL':
                 cur_layer['name'] = 'conv_' + str(new_cur_index)
                 new_dict[str(new_cur_index)] = cur_layer
+            elif cur_layer['layer_type'] == 'LAYER_SCALE':
+                cur_layer['name'] = 'scale_' + str(new_cur_index)
+                new_dict[str(new_cur_index)] = cur_layer
             elif cur_layer['layer_type'] == 'LAYER_CONCAT':
                 cur_layer['name'] = 'concat_' + str(new_cur_index)
                 new_dict[str(new_cur_index)] = cur_layer
@@ -1023,6 +1053,8 @@ class Xtensorflow():
         index = 0
         while index < len(model_variables):
             name = model_variables[index].name
+
+
             # layer_index
             if 'Conv' in model_variables[index].name:
                 print(model_variables[index].name)
@@ -1062,7 +1094,7 @@ class Xtensorflow():
                     weight_list.append(conv_w_tmp.reshape([-1]))
                     bias_list.append(conv_b_tmp)
 
-            if index < len(model_variables) and 'FC' in model_variables[index].name:
+            elif 'FC' in model_variables[index].name:
                 # print(model_variables[index].name)
                 # print(model_variables[index + 1].name)
 
@@ -1075,10 +1107,13 @@ class Xtensorflow():
 
                 index += 2
 
+            else:
+                index += 1
+
 
         return new_dict, weight_list, bias_list
 
-    def create_prototxt_and_caffemodel(self, sess, prototxt, model):
+    def create_prototxt_and_caffemodel(self, sess, prototxt, model, is_caffe_model = False):
         # layer_list, weight_list, bias_list = self.create_xnetlist_v2(sess)
         layer_dict, weight_list, bias_list = self.create_xnetlist_v3(sess)
 
@@ -1098,34 +1133,35 @@ class Xtensorflow():
             for info in info_list:
                 write_node(prototxt_file, info)
 
-        import sys
-        sys.path.insert(0, '/data6/shentao/Projects/Glass_remove_caffe/caffe-master/python')
-        import caffe
+        if is_caffe_model:
+            import sys
+            sys.path.insert(0, '/data6/shentao/Projects/Glass_remove_caffe/caffe-master/python')
+            import caffe
 
-        caffe.set_mode_cpu()
+            caffe.set_mode_cpu()
 
-        net = caffe.Net(prototxt, caffe.TEST)
+            net = caffe.Net(prototxt, caffe.TEST)
 
-        count = 0
-        for info in info_list:
-            name = info['name']
-            op = info['op']
-            if op == 'Convolution':
-                net.params[name][0].data.flat = weight_list[count].flat
-                net.params[name][1].data.flat = bias_list[count].flat
-                count += 1
-            if op == 'FullyConnected':
-                net.params[name][0].data.flat = weight_list[count].flat
-                net.params[name][1].data.flat = bias_list[count].flat
-                count += 1
-            # if name == 'final_scale':
-            #     net.params[name][0].data.flat = np.asarray([127.5]).flat #(x+1)/2 * 255-> x * 127.5 + 127.5
-            #     net.params[name][1].data.flat = np.asarray([127.5]).flat
+            count = 0
+            for info in info_list:
+                name = info['name']
+                op = info['op']
+                if op == 'Convolution':
+                    net.params[name][0].data.flat = weight_list[count].flat
+                    net.params[name][1].data.flat = bias_list[count].flat
+                    count += 1
+                if op == 'FullyConnected':
+                    net.params[name][0].data.flat = weight_list[count].flat
+                    net.params[name][1].data.flat = bias_list[count].flat
+                    count += 1
+                # if name == 'final_scale':
+                #     net.params[name][0].data.flat = np.asarray([127.5]).flat #(x+1)/2 * 255-> x * 127.5 + 127.5
+                #     net.params[name][1].data.flat = np.asarray([127.5]).flat
 
-        # ------------------------------------------
-        # Finish
-        net.save(model)
-        print("\n- Finished.\n")
+            # ------------------------------------------
+            # Finish
+            net.save(model)
+            print("\n- Finished.\n")
 
 
 

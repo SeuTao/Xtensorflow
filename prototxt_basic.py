@@ -287,8 +287,12 @@ def XnetLayerDict2InfoList(layer_dict):
     for i in range(1, len(layer_dict)):
         info = {}
 
-        if layer_dict.has_key(str(i)):
+        # if layer_dict.has_key(str(i)):
+        #     layer = layer_dict[str(i)]
+
+        if str(i) in layer_dict:
             layer = layer_dict[str(i)]
+
 
         if layer['layer_type'] == 'LAYER_CONVOLUTIONAL':
             info['op'] = 'Convolution'
@@ -310,7 +314,24 @@ def XnetLayerDict2InfoList(layer_dict):
             info['activation'] = layer['activation']
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_FULL_CONNECTION':
+        elif layer['layer_type'] == 'LAYER_SCALE':
+            info['op'] = 'Scale'
+            info['name'] = layer['name']
+
+            if layer['input_index'] == 0:
+                info['bottom'] = ['data']
+            else:
+                input = str(layer['input_index'])
+                info['bottom'] = [layer_dict[input]['name']]
+
+            info['top'] = layer['name']
+            info['attrs'] = {}
+            info['attrs']['num_hidden'] = layer['output_dim']
+            info['attrs']['no_bias'] = not layer['bias']
+            info['activation'] = layer['activation']
+            info_list.append(info)
+
+        elif layer['layer_type'] == 'LAYER_FULL_CONNECTION':
             info['op'] = 'FullyConnected'
             info['name'] = layer['name']
 
@@ -327,7 +348,7 @@ def XnetLayerDict2InfoList(layer_dict):
             info['activation'] = layer['activation']
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_NN_RESIZE':
+        elif layer['layer_type'] == 'LAYER_NN_RESIZE':
             info['op'] = 'Resize'
             info['name'] = layer['name']
 
@@ -343,7 +364,7 @@ def XnetLayerDict2InfoList(layer_dict):
             info['resize'] = 'NEAREST'
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_CONCAT':
+        elif layer['layer_type'] == 'LAYER_CONCAT':
             info['op'] = 'Concat'
             info['name'] = layer['name']
 
@@ -356,7 +377,7 @@ def XnetLayerDict2InfoList(layer_dict):
             info['top'] = layer['name']
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_MAX_POOLING':
+        elif layer['layer_type'] == 'LAYER_MAX_POOLING':
             info['op'] = 'Pooling'
             info['name'] = layer['name']
 
@@ -375,7 +396,7 @@ def XnetLayerDict2InfoList(layer_dict):
 
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_AVE_POOLING':
+        elif layer['layer_type'] == 'LAYER_AVE_POOLING':
             info['op'] = 'Pooling'
             info['name'] = layer['name']
 
@@ -394,7 +415,7 @@ def XnetLayerDict2InfoList(layer_dict):
 
             info_list.append(info)
 
-        if layer['layer_type'] == 'LAYER_ELTWISE_SUM':
+        elif layer['layer_type'] == 'LAYER_ELTWISE_SUM':
             info['op'] = 'elemwise_add'
             info['name'] = layer['name']
 
