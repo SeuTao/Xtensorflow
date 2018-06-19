@@ -20,7 +20,17 @@ Convert to Caffemodel:
     xnet.create_prototxt_and_caffemodel(sess,'model.prototxt','model.caffemodel')
     
     
-    
+Predefined Model Zoo：
+
+    input_imgs = tf.placeholder(tf.float32, [None, 224, 224, 3])
+    output, xnet = Resnet50(input_imgs, None, name='resnet50')
+    xnet_variables = tf.get_collection('xnet_varibale')
+    init = tf.variables_initializer(xnet_variables)
+    with tf.Session() as sess:
+        sess.run(init)
+        xnet.create_prototxt_and_caffemodel(sess, 'model.prototxt', 'model.caffemodel')
+
+
     
     
     
