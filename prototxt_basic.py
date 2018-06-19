@@ -42,20 +42,19 @@ def Convolution(txt_file, info):
 
 
   #TODO: inplace activation
-  # if info['activation'] != 'ACTIVE_LINEAR':
-  txt_file.write('layer {\n')
-  txt_file.write('  bottom: "%s"\n'       % info['name'])
-  txt_file.write('  top: "%s"\n'          % info['name'])
-  txt_file.write('  name: "%s"\n'         % (info['name'] + '_activation'))
+  if info['activation'] != 'ACTIVE_LINEAR':
+      txt_file.write('layer {\n')
+      txt_file.write('  bottom: "%s"\n'       % info['name'])
+      txt_file.write('  top: "%s"\n'          % info['name'])
+      txt_file.write('  name: "%s"\n'         % (info['name'] + '_activation'))
 
-  txt_file.write('  type: "ReLU"\n')
-  # if info['activation'] == 'ACTIVE_TANH':
-  #     txt_file.write('  type: "TanH"\n')
-  # elif info['activation'] == 'ACTIVE_RECTIFIED_LINEAR':
-  #     txt_file.write('  type: "ReLU"\n')
-
-  txt_file.write('}\n')
-  txt_file.write('\n')
+      txt_file.write('  type: "ReLU"\n')
+      # if info['activation'] == 'ACTIVE_TANH':
+      #     txt_file.write('  type: "TanH"\n')
+      # elif info['activation'] == 'ACTIVE_RECTIFIED_LINEAR':
+      #     txt_file.write('  type: "ReLU"\n')
+      txt_file.write('}\n')
+      txt_file.write('\n')
 
   # txt_file.write('layer {\n')
   # txt_file.write('  bottom: "%s"\n' % info['name'])
@@ -103,6 +102,24 @@ def Scale(txt_file, info):
   txt_file.write('  scale_param { bias_term: true }\n')
   txt_file.write('}\n')
   txt_file.write('\n')
+
+
+  #TODO: inplace activation
+  if info['activation'] != 'ACTIVE_LINEAR':
+      txt_file.write('layer {\n')
+      txt_file.write('  bottom: "%s"\n'       % info['name'])
+      txt_file.write('  top: "%s"\n'          % info['name'])
+      txt_file.write('  name: "%s"\n'         % (info['name'] + '_activation'))
+
+      txt_file.write('  type: "ReLU"\n')
+      # if info['activation'] == 'ACTIVE_TANH':
+      #     txt_file.write('  type: "TanH"\n')
+      # elif info['activation'] == 'ACTIVE_RECTIFIED_LINEAR':
+      #     txt_file.write('  type: "ReLU"\n')
+      txt_file.write('}\n')
+      txt_file.write('\n')
+
+
   pass
 
 def Resize(txt_file, info):

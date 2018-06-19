@@ -4,7 +4,7 @@ import tensorflow.contrib.slim as slim
 from tensorflow.python.training import moving_averages
 import math
 import numpy as np
-from .prototxt_basic import *
+from prototxt_basic import *
 
 
 # Used to keep the update ops done by batch_norm.
@@ -193,6 +193,7 @@ class Xtensorflow():
 
             # conv = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
             conv = tf.nn.bias_add(conv, biases)
+
             if activation != None:
                 conv = activation(conv)
 
@@ -558,7 +559,7 @@ class Xtensorflow():
         if index == None:
             index = input_index + 1
 
-        conv_index = self.conv_layer(input_index, output_shape, kernel_size, stride , None , rate = 1, index = index)
+        conv_index = self.conv_layer(input_index, output_shape, kernel_size, stride , None , rate = rate, index = index)
         bn_index = self.bn_with_scale_layer(conv_index, activation)
 
         return bn_index
@@ -567,7 +568,7 @@ class Xtensorflow():
         if index == None:
             index = input_index + 1
 
-        conv_index = self.depthwise_conv_layer(input_index, output_shape, kernel_size, stride , None , rate = 1, index = index)
+        conv_index = self.depthwise_conv_layer(input_index, output_shape, kernel_size, stride , None , rate = rate, index = index)
         bn_index = self.bn_with_scale_layer(conv_index, activation)
 
         return bn_index
@@ -651,6 +652,24 @@ class Xtensorflow():
 
         with tf.variable_scope("Layer_MaxPooling_"+str(index)) as scope:
             input = self.get_layer_output(input_index)
+
+            input_h = int(input.shape[1])
+            input_w = int(input.shape[2])
+
+            if input_h % stride != 0 or input_w % stride != 0:
+                print('Conv Input Stride Error')
+                return
+
+            output_h = input_h / stride
+            output_w = input_w / stride
+
+            kernel_size_tmp = kernel_size
+            pad_h = int(math.ceil(((output_h - 1) * stride + kernel_size_tmp - input_h) / 2.0))
+            pad_w = int(math.ceil(((output_w - 1) * stride + kernel_size_tmp - input_w) / 2.0))
+
+            if pad_w > 0:
+                input = tf.pad(input, [[0, 0], [pad_h, pad_h], [pad_w, pad_w], [0, 0]], "CONSTANT")
+
             output = tf.nn.max_pool(input, [1,kernel_size,kernel_size,1], [1,stride,stride,1], padding)
 
             if activation != None:
