@@ -69,5 +69,18 @@ def Resnet50(input, batch_size, name, reuse = False ,model_path = None):
     return xnet.get_network_output(), xnet
 
 if __name__ == '__main__':
-    input = tf.placeholder(tf.float32, [None, 224, 224, 1])
-    Resnet50(input, None, name='resnet50')
+
+    batch_size = None
+    image_size = 224
+    input_colors = 3
+    input_imgs = tf.placeholder(tf.float32, [batch_size, image_size, image_size, input_colors])
+    output, xnet = Resnet50(input_imgs, None, name='resnet50')
+    xnet_variables = tf.get_collection('xnet_varibale')
+    init = tf.variables_initializer(xnet_variables)
+
+    with tf.Session() as sess:
+        sess.run(init)
+
+        #TODO some bugs here, to be fixed
+        xnet.create_prototxt_and_caffemodel(sess, 'model.prototxt', 'model.caffemodel')
+

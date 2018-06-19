@@ -1,4 +1,3 @@
-
 import sys
 caffe_root = ''
 sys.path.insert(0,caffe_root+'python')
