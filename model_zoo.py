@@ -66,9 +66,6 @@ def Resnet50(input, batch_size, name, reuse = False ,model_path = None):
         stage4_unit2 = resnet_block(stage4_unit1, [batch_size, 2048], is_botteneck=False)
         stage4_unit3 = resnet_block(stage4_unit2, [batch_size, 2048], is_botteneck=False)
 
-        final_scale = xnet.scale_layer(stage4_unit3, None, index=stage4_unit3 + 1)
-        # final_fc = xnet.fc_layer(final_scale, [batch_size, 512], None)
-
     return xnet.get_network_output(), xnet
 
 if __name__ == '__main__':
