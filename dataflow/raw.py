@@ -7,7 +7,7 @@ import copy
 import six
 from six.moves import range
 from .base import DataFlow, RNGDataFlow
-from ..utils.develop import log_deprecated
+# from ..utils.develop import log_deprecated
 
 __all__ = ['FakeData', 'DataFromQueue', 'DataFromList', 'DataFromGenerator', 'DataFromIterable']
 

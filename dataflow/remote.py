@@ -7,9 +7,9 @@ import tqdm
 
 from collections import deque
 from .base import DataFlow, DataFlowReentrantGuard
-from ..utils import logger
-from ..utils.utils import get_tqdm_kwargs
-from ..utils.serialize import dumps, loads
+# from ..utils import logger
+# from ..utils.utils import get_tqdm_kwargs
+# from ..utils.serialize import dumps, loads
 try:
     import zmq
 except ImportError:

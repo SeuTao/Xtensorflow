@@ -13,9 +13,9 @@ from six.moves import range, map
 import tqdm
 
 from .base import DataFlow, ProxyDataFlow, RNGDataFlow, DataFlowReentrantGuard
-from ..utils import logger
-from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
-from ..utils.develop import log_deprecated
+# from ..utils import logger
+# from ..utils.utils import get_tqdm, get_rng, get_tqdm_kwargs
+# from ..utils.develop import log_deprecated
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',

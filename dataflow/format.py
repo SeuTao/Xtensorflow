@@ -7,12 +7,12 @@ import six
 from six.moves import range
 import os
 
-from ..utils import logger
-from ..utils.utils import get_tqdm
-from ..utils.timer import timed_operation
-from ..utils.loadcaffe import get_caffe_pb
-from ..utils.serialize import loads
-from ..utils.argtools import log_once
+# from ..utils import logger
+# from ..utils.utils import get_tqdm
+# from ..utils.timer import timed_operation
+# from ..utils.loadcaffe import get_caffe_pb
+# from ..utils.serialize import loads
+# from ..utils.argtools import log_once
 from .base import RNGDataFlow, DataFlow, DataFlowReentrantGuard
 from .common import MapData
 
@@ -292,19 +292,19 @@ class TFRecordData(DataFlow):
         for dp in gen:
             yield loads(dp)
 
-from ..utils.develop import create_dummy_class   # noqa
-try:
-    import h5py
-except ImportError:
-    HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
-
-try:
-    import lmdb
-except ImportError:
-    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
-        globals()[klass] = create_dummy_class(klass, 'lmdb')
-
-try:
-    import tensorflow as tf
-except ImportError:
-    TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa
+# from ..utils.develop import create_dummy_class   # noqa
+# try:
+#     import h5py
+# except ImportError:
+#     HDF5Data = create_dummy_class('HDF5Data', 'h5py')   # noqa
+#
+# try:
+#     import lmdb
+# except ImportError:
+#     for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
+#         globals()[klass] = create_dummy_class(klass, 'lmdb')
+#
+# try:
+#     import tensorflow as tf
+# except ImportError:
+#     TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa

@@ -7,8 +7,8 @@ import copy as copy_mod
 from contextlib import contextmanager
 from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
-from ..utils import logger
-from ..utils.argtools import shape2d
+# from ..utils import logger
+# from ..utils.argtools import shape2d
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImageCoordinates', 'AugmentImageComponents']
 
@@ -224,12 +224,12 @@ class AugmentImageComponents(MapData):
         self.augs.reset_state()
 
 
-try:
-    import cv2
-    from .imgaug import AugmentorList
-except ImportError:
-    from ..utils.develop import create_dummy_class
-    ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
-    AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
-    AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') # noqa
-    AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa
+# try:
+import cv2
+from .imgaug import AugmentorList
+# except ImportError:
+#     from ..utils.develop import create_dummy_class
+#     ImageFromFile = create_dummy_class('ImageFromFile', 'cv2')  # noqa
+#     AugmentImageComponent = create_dummy_class('AugmentImageComponent', 'cv2')  # noqa
+#     AugmentImageCoordinates = create_dummy_class('AugmentImageCoordinates', 'cv2') # noqa
+#     AugmentImageComponents = create_dummy_class('AugmentImageComponents', 'cv2')  # noqa

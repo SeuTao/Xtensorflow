@@ -7,10 +7,10 @@ import multiprocessing as mp
 from six.moves import range
 
 from .base import DataFlow
-from ..utils import logger
-from ..utils.utils import get_tqdm
-from ..utils.concurrency import DIE
-from ..utils.serialize import dumps
+# from ..utils import logger
+# from ..utils.utils import get_tqdm
+# from ..utils.concurrency import DIE
+# from ..utils.serialize import dumps
 
 __all__ = ['dump_dataflow_to_process_queue',
            'dump_dataflow_to_lmdb', 'dump_dataflow_to_tfrecord']
