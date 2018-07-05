@@ -5,29 +5,16 @@ from tensorflow.python.training import moving_averages
 import math
 import numpy as np
 from prototxt_basic import *
+from utils import *
 
 
 # Used to keep the update ops done by batch_norm.
 UPDATE_OPS_COLLECTION = '_update_ops_'
 XNET_VARIABLE_COLLECTION = 'xnet_varibale'
-
 # xnet_collections = ['xnet_varibale',tf.GraphKeys.TRAINABLE_VARIABLES,tf.GraphKeys.GLOBAL_VARIABLES]
-xnet_collections = ['xnet_varibale',tf.GraphKeys.GLOBAL_VARIABLES]
+xnet_collections = ['xnet_varibale', tf.GraphKeys.GLOBAL_VARIABLES]
 
-
-# ============================ACTIVATION FUNCTION=====================
-def lrelu(x):
-    #leaky relu
-    return tf.maximum(x * 0.2, x)
-
-def prelu(_x):
-    # leaky relu
-    alphas = tf.get_variable('alpha', _x.get_shape()[-1], dtype=tf.float32,
-                             initializer=tf.constant_initializer(0.0), collections=xnet_collections)
-    pos = tf.nn.relu(_x)
-    neg = alphas * (_x - abs(_x)) * 0.5
-    return pos + neg
-
+GLOBAL_EPS = 0.00001
 # ============================LAYER MAP==============================
 layermap = {'Convolution': 'LAYER_CONVOLUTIONAL',
             'Pooling_MAX': 'LAYER_MAX_POOLING',
@@ -44,31 +31,6 @@ layermap = {'Convolution': 'LAYER_CONVOLUTIONAL',
             'Power': 'LAYER_POWER',
             'ReLU': 'LAYER_RELU'}
 
-# ============================WEIGHTS HELPER=========================
-def write_biases(pf, param_dict, num ):
-    nparam = 1
-    for param in param_dict:
-
-        wtmp = param.reshape([-1])
-        for ntmp in wtmp:
-            if nparam % num == 0:
-                pf.write('\n')
-            pf.write('%f, ' % ntmp)
-            nparam += 1
-
-def write_weights(pf, param_dict, num):
-    nparam = 1
-    for param in param_dict:
-        k_w = param.shape[0]
-
-        for o in range(k_w):
-            wtmp = param[o]
-            if nparam % num == 0:
-                pf.write('\n')
-            pf.write('%f, ' % wtmp)
-            nparam += 1
-
-
 # ============================Xtensorflow==============================
 class Xtensorflow():
     def __init__(self, input ,weight_decay = 0.0 ,is_train = True, model_name = 'load', load_from_txt = None, cnn_type = "CLASSIFY"):
@@ -77,8 +39,8 @@ class Xtensorflow():
         self.model_name = model_name
         self.layer_dict = {}
         self.input_dim = input.shape[-1]
-        self.input_w = input.shape[2]
-        self.input_h = input.shape[1]
+        # self.input_w = input.shape[2]
+        # self.input_h = input.shape[1]
         self.weight_decay = tf.constant(weight_decay, dtype=tf.float32)
 
         self.reduce_index = 0
@@ -89,7 +51,6 @@ class Xtensorflow():
         layer['output'] = input
         layer['reduce_index'] = 0
         self.reduce_index_list.append(self.reduce_index)
-
         self.layer_dict[str(0)] = layer
         self.cnn_type = cnn_type
 
@@ -140,9 +101,6 @@ class Xtensorflow():
 
             input = self.get_layer_output(input_index)
 
-            # input.shape.tolist()
-            # input_shape = input.get_shape().as_list()
-
             input_dim = input.shape[-1]
             output_dim = output_shape[-1]
 
@@ -152,7 +110,6 @@ class Xtensorflow():
             if input_h%stride !=0 or input_w%stride !=0:
                 print('Conv Input Stride Error')
                 return
-
 
             output_h = input_h / stride
             output_w = input_w / stride
@@ -166,25 +123,34 @@ class Xtensorflow():
             if pad_w > 0:
                 input = tf.pad(input, [[0, 0], [pad_h, pad_h], [pad_w, pad_w], [0, 0]], "CONSTANT")
 
-
             if self.load_from_txt !=None:
                 weights_path = self.load_from_txt + '/model/'+ str(index) + '/weights.txt'
                 biases_path = self.load_from_txt + '/model/'+ str(index) + '/biases.txt'
 
-                w = np.loadtxt(weights_path, delimiter=' ',dtype=float).astype(np.float32)
-                b = np.loadtxt(biases_path, delimiter=' ', dtype=float).astype(np.float32)
+                w = read_from_txt(weights_path)
+                b = read_from_txt(biases_path)
 
-                w = w.reshape([output_dim, input_dim, kernel_size, kernel_size])
+                print(w.shape)
+                print(int(output_dim)*int(input_dim)*int(kernel_size)*int(kernel_size))
+                # w = np.loadtxt(weights_path, delimiter=' ')
+                    # .astype(np.float32)
+                # b = np.loadtxt(biases_path, delimiter=' ')
+                    # .astype(np.float32)
+
+                w = w.reshape([int(output_dim), input_dim, kernel_size, kernel_size])
                 w = w.transpose(2, 3, 1, 0)
 
                 weights = tf.get_variable('weights',initializer=w,
-                                         regularizer=tf.contrib.layers.l2_regularizer(self.weight_decay),collections=xnet_collections)
-                biases = tf.get_variable('biases', initializer=b,collections=xnet_collections)
+                                          regularizer=tf.contrib.layers.l2_regularizer(self.weight_decay),
+                                          collections=xnet_collections)
+                biases = tf.get_variable('biases',
+                                         initializer=b,collections=xnet_collections)
             else:
                 weights = tf.get_variable('weights', [kernel_size, kernel_size, input.get_shape()[-1],output_shape[-1] ],
-                                    initializer=tf.contrib.layers.xavier_initializer(),
-                                    regularizer=tf.contrib.layers.l2_regularizer(self.weight_decay),collections=xnet_collections)
-                biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0),collections=xnet_collections)
+                                        initializer=tf.contrib.layers.xavier_initializer(),
+                                        regularizer=tf.contrib.layers.l2_regularizer(self.weight_decay),collections=xnet_collections)
+                biases = tf.get_variable('biases', [output_shape[-1]],
+                                         initializer=tf.constant_initializer(0.0),collections=xnet_collections)
 
             if rate == 1:
                 conv = tf.nn.conv2d(input, weights, strides=[1, stride, stride, 1], padding='VALID')
@@ -214,11 +180,29 @@ class Xtensorflow():
             input = self.get_layer_output(input_index)
             inputs_shape = input.get_shape()
 
-            gamma = tf.get_variable('gamma', inputs_shape[-1], initializer=tf.ones_initializer(),
-                                        collections=xnet_collections)
+            if self.load_from_txt !=None:
+                weights_path = self.load_from_txt + '/model/'+ str(index) + '/weights.txt'
+                biases_path = self.load_from_txt + '/model/'+ str(index) + '/biases.txt'
 
-            beta = tf.get_variable('beta', inputs_shape[-1], initializer=tf.zeros_initializer(),
-                                       collections=xnet_collections)
+                w = read_from_txt(weights_path)
+                b = read_from_txt(biases_path)
+
+                print(w.shape)
+
+                w = w.reshape([inputs_shape[-1]])
+                b = b.reshape([inputs_shape[-1]])
+
+
+                gamma = tf.get_variable('gamma',initializer=w, collections=xnet_collections)
+
+                beta = tf.get_variable('beta', initializer=b, collections=xnet_collections)
+            else:
+
+                gamma = tf.get_variable('gamma', inputs_shape[-1], initializer=tf.ones_initializer(),
+                                            collections=xnet_collections)
+
+                beta = tf.get_variable('beta', inputs_shape[-1], initializer=tf.zeros_initializer(),
+                                           collections=xnet_collections)
 
             out = tf.nn.bias_add(input * gamma, beta)
             if activation != None:
@@ -232,7 +216,6 @@ class Xtensorflow():
 
             self.layer_dict[str(index)] = layer
             return index
-
 
     def depthwise_conv_layer(self , input_index, output_shape, kernel_size, stride , activation, rate = 1, index = None):
         if index == None:
@@ -483,7 +466,7 @@ class Xtensorflow():
 
             input = self.get_layer_output(input_index)
 
-            def batch_norm(inputs,decay=0.9,center=True,scale=True,epsilon=0.001,
+            def batch_norm(inputs, decay=0.99, center=True, scale=True, epsilon=0.001,
                            activation=None,trainable=True,restore=True,scope=None,reuse=None):
 
                 inputs_shape = inputs.get_shape()
@@ -653,24 +636,27 @@ class Xtensorflow():
         with tf.variable_scope("Layer_MaxPooling_"+str(index)) as scope:
             input = self.get_layer_output(input_index)
 
-            input_h = int(input.shape[1])
-            input_w = int(input.shape[2])
 
-            if input_h % stride != 0 or input_w % stride != 0:
-                print('Conv Input Stride Error')
-                return
+            if padding == 'VALID':
+                input_h = int(input.shape[1])
+                input_w = int(input.shape[2])
 
-            output_h = input_h / stride
-            output_w = input_w / stride
+                if input_h % stride != 0 or input_w % stride != 0:
+                    print('Conv Input Stride Error')
+                    return
 
-            kernel_size_tmp = kernel_size
-            pad_h = int(math.ceil(((output_h - 1) * stride + kernel_size_tmp - input_h) / 2.0))
-            pad_w = int(math.ceil(((output_w - 1) * stride + kernel_size_tmp - input_w) / 2.0))
+                # output_h = math.ceil(input_h / stride)
+                # output_w = math.ceil(input_w / stride)
 
-            if pad_w > 0:
-                input = tf.pad(input, [[0, 0], [pad_h, pad_h], [pad_w, pad_w], [0, 0]], "CONSTANT")
+                pad_h = kernel_size - input_h%stride - stride
+                pad_w = kernel_size - input_w%stride - stride
 
-            output = tf.nn.max_pool(input, [1,kernel_size,kernel_size,1], [1,stride,stride,1], padding)
+                if pad_w > 0:
+                    input = tf.pad(input, [[0, 0], [0, pad_h], [0, pad_w], [0, 0]], "CONSTANT")
+
+                output = tf.nn.max_pool(input, [1, kernel_size, kernel_size, 1], [1, stride, stride, 1], padding)
+            else:
+                output = tf.nn.max_pool(input, [1,kernel_size,kernel_size,1], [1,stride,stride,1], padding)
 
             if activation != None:
                 output = activation(output)
@@ -727,8 +713,11 @@ class Xtensorflow():
                 weights_path = self.load_from_txt + '/model/'+ str(index) + '/weights.txt'
                 biases_path = self.load_from_txt + '/model/'+ str(index) + '/biases.txt'
 
-                w = np.loadtxt(weights_path, delimiter=' ',dtype=float).astype(np.float32)
-                b = np.loadtxt(biases_path, delimiter=' ', dtype=float).astype(np.float32)
+                # w = np.loadtxt(weights_path, delimiter=' ',dtype=float).astype(np.float32)
+                # b = np.loadtxt(biases_path, delimiter=' ', dtype=float).astype(np.float32)
+
+                w = read_from_txt(weights_path)
+                b = read_from_txt(biases_path)
 
                 w = w.reshape([output_dim, input_dim])
                 w = w.transpose(1, 0)
@@ -755,6 +744,24 @@ class Xtensorflow():
             print(output)
             layer = self.layer_info(index, input_index, 1, 'LAYER_FULL_CONNECTION',
                                     input.shape[-1], output_shape[-1], 1, 1, 0, 0, True, activation,
+                                    output, self.reduce_index)
+            self.layer_dict[str(index)] = layer
+
+            return index
+
+    def reshape_layer(self, input_index, output_shape, activation = None, index=None):
+        if index == None:
+            index = input_index + 1
+
+            input = self.get_layer_output(input_index)
+            output = tf.reshape(input, output_shape)
+
+            if activation != None:
+                output = activation(output)
+
+            print(output)
+            layer = self.layer_info(index, input_index, 1, 'LAYER_RESHAPE',
+                                    input.shape[-1], output_shape[-1], 1, 1, 0, 0, False, activation,
                                     output, self.reduce_index)
             self.layer_dict[str(index)] = layer
 
@@ -908,12 +915,12 @@ class Xtensorflow():
                 dim_list = layer['input_dim']
                 for index in range(len(index_list)):
                     str_list = [str(layer['index']- layer['reduce_index']),str(index_list[index]- self.reduce_index_list[index_list[index]]),str(len(index_list)),layer['layer_type'],
-                                str(dim_list[index]),str(layer['outpt_dim']),'0','0','0','0','False', layer['activation']]
+                                str(dim_list[index]),str(layer['output_dim']),'0','0','0','0','False', layer['activation']]
                     layer_list.append(str_list)
 
             else:
                 str_list = [str(layer['index']- layer['reduce_index']), str(layer['input_index']- self.reduce_index_list[layer['input_index']]), str(layer['input_num']),layer['layer_type'],
-                            str(layer['input_dim']),str(layer['outpt_dim']),str(layer['kernel_size']),
+                            str(layer['input_dim']),str(layer['output_dim']),str(layer['kernel_size']),
                             str(layer['stride']), str(layer['padding']), str(layer['dialation']),str(layer['bias']),
                             layer['activation']]
                 layer_list.append(str_list)
@@ -965,7 +972,7 @@ class Xtensorflow():
                     bn_gamma_tmp = sess.run(model_variables[index + 2])
                     bn_beta_tmp = sess.run(model_variables[index + 3])
 
-                    bn_variance_tmp = np.sqrt(bn_variance_tmp.reshape([-1]) + 0.001)
+                    bn_variance_tmp = np.sqrt(bn_variance_tmp.reshape([-1]) + GLOBAL_EPS)
                     bn_mean_tmp = bn_mean_tmp.reshape([-1])
                     bn_gamma_tmp = bn_gamma_tmp.reshape([-1])
                     bn_beta_tmp = bn_beta_tmp.reshape([-1])
@@ -1007,7 +1014,6 @@ class Xtensorflow():
             if str(tmp) == '0':
                 new_dict[str(tmp)] = cur_layer
                 continue
-
 
             input_index = cur_layer['input_index']
             cur_index =  cur_layer['index']
@@ -1096,7 +1102,7 @@ class Xtensorflow():
                     bn_gamma_tmp = sess.run(model_variables[index + 2])
                     bn_beta_tmp = sess.run(model_variables[index + 3])
 
-                    bn_variance_tmp = np.sqrt(bn_variance_tmp.reshape([-1]) + 0.001)
+                    bn_variance_tmp = np.sqrt(bn_variance_tmp.reshape([-1]) + GLOBAL_EPS)
                     bn_mean_tmp = bn_mean_tmp.reshape([-1])
                     bn_gamma_tmp = bn_gamma_tmp.reshape([-1])
                     bn_beta_tmp = bn_beta_tmp.reshape([-1])
@@ -1181,6 +1187,59 @@ class Xtensorflow():
             # Finish
             net.save(model)
             print("\n- Finished.\n")
+
+    def create_xnetfile(self,sess):
+        xnetname = self.model_name
+        systime = time.strftime('%Y-%m-%d,%H:%M', time.localtime(time.time()))
+        params_txt = 'xnet_' + xnetname + '.h'
+        pf = open(params_txt, 'w')
+
+        xnetversion = 'test'
+        pf.write('/**xnetlib information*******\n')
+        pf.write('*model generate time:%s\n' % systime)
+        pf.write('*lib name           :%s\n' % xnetname)
+        pf.write('*version num        :%s\n' % xnetversion)
+        pf.write('****************/\n')
+
+        ##pf.write('#include "xbase.h"\n')
+        ##pf.write('#include "xnet_model.h"\n')
+
+        pf.write('namespace %s {\n' % xnetname)
+        pf.write('const ModelLayer model_layers[] = {\n')
+
+        layer_list, weight_list, bias_list = self.create_xnetlist(sess)
+
+        for layer in layer_list:
+            param_str = ', '.join(layer)
+            pf.write('{%s},\n' % param_str)
+
+        pf.write('};\n')
+        pf.write('const int nModelLayer = %d;\n' % len(layer_list))
+
+        ## width,height,channels
+        pf.write('const int img_width = %d;\n' % 128)
+        pf.write('const int img_height = %d;\n' % 128)
+        pf.write('const int input_dims = %d;\n' % self.input_dim)
+        pf.write('const int cnn_type = %s;\n' % 'CLASSIFY')
+
+        ## weights
+        pf.write('const float weight[] = {\n')
+        write_weights(pf, weight_list, 100)
+        pf.write('\n};\n')
+
+        ## bias
+        pf.write('const float bias[] = {\n')
+        write_weights(pf, bias_list, 30)
+        pf.write('\n};\n')
+
+        ## data mean
+        data_mean = '128,128,128'
+        data_std = '1,1,1'
+
+        pf.write('const float data_mean[] = {%s};\n' % data_mean)
+        pf.write('const float data_std[] = {%s};\n' % data_std)
+        pf.write('}\n')
+        pf.close
 
 
 
