@@ -5,6 +5,7 @@
 import inspect
 import six
 from . import logger
+
 if six.PY2:
     import functools32 as functools
 else:

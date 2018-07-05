@@ -13,7 +13,7 @@ XNET_VARIABLE_COLLECTION = 'xnet_varibale'
 # xnet_collections = ['xnet_varibale',tf.GraphKeys.TRAINABLE_VARIABLES,tf.GraphKeys.GLOBAL_VARIABLES]
 xnet_collections = ['xnet_varibale', tf.GraphKeys.GLOBAL_VARIABLES]
 
-GLOBAL_EPS = 0.001
+GLOBAL_EPS = 0.00001
 # ============================LAYER MAP==============================
 layermap = {'Convolution': 'LAYER_CONVOLUTIONAL',
             'Pooling_MAX': 'LAYER_MAX_POOLING',

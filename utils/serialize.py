@@ -55,7 +55,7 @@ try:
     import msgpack_numpy
     msgpack_numpy.patch()
 except ImportError:
-    assert pa is not None, "pyarrow is a dependency of tensorpack!"
+    assert pa is not None, "pyarrow is a dependency of Xtensorflow!"
     loads_msgpack = create_dummy_func(  # noqa
         'loads_msgpack', ['msgpack', 'msgpack_numpy'])
     dumps_msgpack = create_dummy_func(  # noqa
