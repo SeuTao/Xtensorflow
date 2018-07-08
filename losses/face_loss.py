@@ -24,6 +24,7 @@ def arcface_loss(embedding, labels, out_num, w_init=None, s=64., m=0.5):
                                   initializer=w_init, dtype=tf.float32)
         weights_norm = tf.norm(weights, axis=0, keep_dims=True)
         weights = tf.div(weights, weights_norm, name='norm_weights')
+
         # cos(theta+m)
         cos_t = tf.matmul(embedding, weights, name='cos_t')
         cos_t2 = tf.square(cos_t, name='cos_2')
@@ -98,6 +99,7 @@ def combine_loss_val(embedding, labels, w_init, out_num, margin_a, margin_m, mar
     ordinal_y = tf.stack([ordinal, labels], axis=1)
     zy = cos_t * s
     sel_cos_t = tf.gather_nd(zy, ordinal_y)
+
     if margin_a != 1.0 or margin_m != 0.0 or margin_b != 0.0:
         if margin_a == 1.0 and margin_m == 0.0:
             s_m = s * margin_b
@@ -113,6 +115,7 @@ def combine_loss_val(embedding, labels, w_init, out_num, margin_a, margin_m, mar
             if margin_b > 0.0:
                 body = body - margin_b
             new_zy = body * s
+
     updated_logits = tf.add(zy, tf.scatter_nd(ordinal_y, tf.subtract(new_zy, sel_cos_t), zy.get_shape()))
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=updated_logits))
     predict_cls = tf.argmax(updated_logits, 1)

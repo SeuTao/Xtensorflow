@@ -2,10 +2,11 @@ import time
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.python.training import moving_averages
-import math
-import numpy as np
+
 from prototxt_basic import *
 from helper import *
+import numpy as np
+import math
 
 # Used to keep the update ops done by batch_norm.
 UPDATE_OPS_COLLECTION = '_update_ops_'
@@ -13,7 +14,7 @@ XNET_VARIABLE_COLLECTION = 'xnet_varibale'
 # xnet_collections = ['xnet_varibale',tf.GraphKeys.TRAINABLE_VARIABLES,tf.GraphKeys.GLOBAL_VARIABLES]
 xnet_collections = ['xnet_varibale', tf.GraphKeys.GLOBAL_VARIABLES]
 
-GLOBAL_EPS = 0.00001
+GLOBAL_EPS = 0.001
 # ============================LAYER MAP==============================
 layermap = {'Convolution': 'LAYER_CONVOLUTIONAL',
             'Pooling_MAX': 'LAYER_MAX_POOLING',
