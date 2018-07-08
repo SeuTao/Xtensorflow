@@ -5,7 +5,7 @@
 import numpy as np
 import copy as copy_mod
 from contextlib import contextmanager
-from .base import RNGDataFlow
+# from .base import RNGDataFlow
 from .common import MapDataComponent, MapData
 # from ..utils import logger
 # from ..utils.argtools import shape2d
